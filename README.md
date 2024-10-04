@@ -1,7 +1,8 @@
 # Утилита расшифрования tdata для Telegram Desktop
 
-[Основной репозиторий](https://gitflic.ru/project/consensus/tdata-decrypt)
 [Burger language](README.en.md)
+
+[Основной репозиторий](https://gitflic.ru/project/consensus/tdata-decrypt)
 
 Практически польностью переписанная версия [tdesktop-decrypter](https://github.com/ntqbit/tdesktop-decrypter)
 
