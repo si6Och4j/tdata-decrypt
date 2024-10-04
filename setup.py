@@ -1,8 +1,14 @@
 from setuptools import setup
 
 setup(
-    name="Telegram Desktop decrypter",
+    name="tdata-decrypt",
     version="1.0",
-    packages=['tdesktop_decrypter'],
-    install_requires=['tgcrypto']
+    description='Telegram Desktop\'s tdata decryption tool',
+    packages=['tdata_decrypt'],
+    install_requires=['tgcrypto'],
+    entry_points={
+        'console_scripts': [
+            'tdata-decrypt = tdata_decrypt:cli',
+        ],
+    },
 )

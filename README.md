@@ -1,18 +1,36 @@
-# Telegram Desktop tdata folder decrypter written in python
-Inspired by [telegram-desktop-decrypt](https://github.com/atilaromero/telegram-desktop-decrypt)
+# Утилита расшифрования tdata для Telegram Desktop
 
-# Installation
+[Основной репозиторий](https://gitflic.ru/project/consensus/tdata-decrypt)
+[Burger language](README.en.md)
+
+Практически польностью переписанная версия [tdesktop-decrypter](https://github.com/ntqbit/tdesktop-decrypter)
+
+# Установка:
 ```bash
-git clone https://github.com/ntqbit/tdesktop-decrypter
-pip install ./tdesktop-decrypter
+git clone https://github.com/si6Och4j/tdata-decrypt
+pip install ./tdata-decrypt
 ```
 
-# Usage
+# Использование
 ```bash
-python -m tdesktop_decrypter /path/to/tdata
+tdata-decrypt /path/to/tdata
 ```
 
-# Useful links
+Стандартные папки для хранения tdata:
+ - Linux - `/home/*user*/.local/share/TelegramDesktop/tdata`
+ - Windows - `C:\Users\*User*\AppData\Roaming\TelegramDesktop\tdata`
+
+Поскольку это *"Практически польностью переписанная версия"* все переписанные части распространяются под лицензией AGPL-3.0-only
+
+# TODO:
+> `¯\_(ツ)_/¯` Мы все знаем как работают планы
+ - Расшифрование кеша
+ - Возможность шифрования шифрования
+ - Возможность модификации данных
+
+# Основано на:
+https://github.com/ntqbit/tdesktop-decrypter
+
 https://github.com/atilaromero/telegram-desktop-decrypt
 
 https://github.com/MihaZupan/TelegramStorageParser
