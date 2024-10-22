@@ -1,20 +1,17 @@
-import argparse
 from .data import TData
+import base64
 
-def cli():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('tdata', type=str, help='Path to tdata directory')
-    parser.add_argument('--password', type=str, help='Local key encryption password', default='', required=False)
-    args = parser.parse_args()
-
-    for account in TData.read_accounts(args.tdata, args.password).accounts.values():
+def display_accounts(data: TData):
+    for account in data.read_accounts().values():
         print(f'Account {account.index}:')
 
         print(f'\tUser ID: {account.mtp_data.user_id}')
-        print(f'\tMain DC ID: {account.mtp_data.main_dc_id}')
+        print(f'\tMain DC: {account.mtp_data.main_dc_id}')
 
+        print(f'\tKeys to destroy:')
         for dc_id, key in account.mtp_data.keys_to_destroy.items():
-            print(f'\tKey TD DC {dc_id}: {key.hex(" ")}')
+            print(f'\t\tDC {dc_id}: {base64.b64encode(key)}')
 
+        print(f'\tAuth Keys:')
         for dc_id, key in account.mtp_data.keys.items():
-            print(f'\tKey DC {dc_id}: {key.hex(" ")}')
+            print(f'\t\tDC {dc_id}: {base64.b64encode(key)}')

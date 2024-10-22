@@ -3,7 +3,7 @@ import tgcrypto
 
 LocalEncryptNoPwdIterCount = 4
 LocalEncryptIterCount = 400
-kStrongIterationsCount = 100000
+KStrongIterationsCount = 100000
 
 class CryptoException(Exception):
     pass
@@ -12,9 +12,10 @@ class CryptoException(Exception):
 def create_local_key(passcode: bytes, salt: bytes) -> bytes:
     iterations = 1
     if passcode:
-        iterations = kStrongIterationsCount
+        iterations = KStrongIterationsCount
 
     password = hashlib.sha512(salt + passcode + salt).digest()
+
     return hashlib.pbkdf2_hmac('sha512', password, salt, iterations, 256)
 
 

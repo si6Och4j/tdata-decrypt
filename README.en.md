@@ -1,4 +1,4 @@
-# Telegram Desktop tdata decryption tool
+# Telegram Desktop data extraction tool
 
 Almost entirely rewritten version of [tdesktop-decrypter](https://github.com/ntqbit/tdesktop-decrypter)
 
@@ -15,7 +15,8 @@ tdata-decrypt /path/to/tdata
 
 Default tdata folder locations:
  - Linux - `/home/*user*/.local/share/TelegramDesktop/tdata`
- - Windows - `C:\Users\*User*\AppData\Roaming\TelegramDesktop\tdata`
+ - Windows (Current user) - `%AppData%\Roaming\TelegramDesktop\tdata`
+ - MacOS - iToddlers has a right to cry
 
 Beacuse of *"Almost entirely rewritten version"* all the rewritten parts are distributed under conditions of AGPL-3.0-only
 

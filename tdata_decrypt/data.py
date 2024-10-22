@@ -1,8 +1,8 @@
 import os
 import hashlib
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from io import BytesIO
-from tdata_decrypt.qt import read_qt_int32, read_qt_uint64
+from tdata_decrypt.tdt import TDInt32, TDUInt64
 from tdata_decrypt.tdf import SettingsTDF, KeyTDF
 from tdata_decrypt.settings import SettingsBlocks, read_key_data_accounts
 
@@ -35,16 +35,16 @@ class MtpData:
         stream = BytesIO(data)
 
         mtp_data = cls()
-        mtp_data.user_id = read_qt_int32(stream) # legacy_user_id
-        mtp_data.main_dc_id = read_qt_int32(stream) # legacy_main_dc_id
+        mtp_data.user_id = TDInt32.read(stream) # legacy_user_id
+        mtp_data.main_dc_id = TDInt32.read(stream) # legacy_main_dc_id
         if mtp_data.user_id == -1 and mtp_data.main_dc_id == -1:
-            mtp_data.user_id = read_qt_uint64(stream)
-            mtp_data.main_dc_id = read_qt_int32(stream)
+            mtp_data.user_id = TDUInt64.read(stream)
+            mtp_data.main_dc_id = TDInt32.read(stream)
 
         def read_keys():
             return {
-                read_qt_int32(stream): stream.read(256)
-                for _ in range(read_qt_int32(stream)) # count
+                TDInt32.read(stream): stream.read(256)
+                for _ in range(TDInt32.read(stream)) # count
             }
 
         mtp_data.keys = read_keys()
@@ -82,28 +82,44 @@ class Account:
 
 
 class TData:
-    def __init__(self):
-        self.settings = None
-        self.local_key = None
-        self.accounts: Dict[int, Account] = {}
-
-    @classmethod
-    def read_accounts(cls, path: str, password: str = ''):
-        local_key, accounts_index = KeyTDF.read_key(
+    def __init__(self, path: str, password: str = ''):
+        self.local_key, self.accounts_index = KeyTDF.read_key(
             os.path.join(path, 'key_data'),
             password
         )
-        account_indexes, _ = read_key_data_accounts(BytesIO(accounts_index))
 
-        tdata = cls()
-        tdata.settings = SettingsTDF.read_settings(
-            os.path.join(path, 'settings'),
+        self.path = path
+        self.settings: Optional(SettingsTDF) = None
+        self.accounts: Optional(Dict[int, Account]) = None
+        self.main_account: Optional(int) = None
+
+    def read_settings(self):
+        if not self.settings is None:
+            return self.settings
+
+        self.settings = SettingsTDF.read_settings(
+            os.path.join(path, 'settings')
         )
-        tdata.local_key = local_key
-        tdata.accounts = {}
+
+        return self.settings
+
+    def read_accounts(self):
+        if not self.accounts is None:
+            return self.accounts
+
+        account_indexes, self.main_account = \
+            read_key_data_accounts(BytesIO(self.accounts_index))
+
+        self.accounts = {}
         for index in account_indexes:
-            tdata.accounts[index] = Account.get_by_index(
-                path, index, local_key
+            self.accounts[index] = Account.get_by_index(
+                self.path, index, self.local_key
             )
 
-        return tdata
+
+        return self.accounts
+
+    def get_main_account(self):
+        self.read_accounts()
+
+        return self.main_account

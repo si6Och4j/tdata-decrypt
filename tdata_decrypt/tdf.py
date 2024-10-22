@@ -2,7 +2,7 @@ import hashlib
 from io import BytesIO
 from tdata_decrypt.settings import read_settings_blocks
 from tdata_decrypt.crypto import create_local_key, create_legacy_local_key, decrypt_local
-from tdata_decrypt.qt import read_qt_byte_array
+from tdata_decrypt.tdt import TDByteArray
 
 class RawTDF:
     MAGIC = b'TDF$'
@@ -55,7 +55,6 @@ class RawTDF:
             tdf.version.to_bytes(4, 'little') +
             cls.MAGIC
         ).digest()
-
         if checksum != tdf.hashsum:
             raise TdfParserError('Wrong hashsum. Corrupted file?')
 
@@ -66,9 +65,9 @@ class KeyTDF(RawTDF):
     def get_key(self, password: bytes = b''):
         stream = self.get_stream()
 
-        salt = read_qt_byte_array(stream)
-        key_sealed = read_qt_byte_array(stream)
-        info_sealed = read_qt_byte_array(stream)
+        salt = TDByteArray.read(stream)
+        key_sealed = TDByteArray.read(stream)
+        info_sealed = TDByteArray.read(stream)
 
         key = create_local_key(password, salt)
 
@@ -85,8 +84,8 @@ class KeyTDF(RawTDF):
 class SettingsTDF(RawTDF):
     def get_raw_settings(self, key: str = ''):
         stream = self.get_stream()
-        salt = read_qt_byte_array(stream)
-        data = read_qt_byte_array(stream)
+        salt = TDByteArray.read(stream)
+        data = TDByteArray.read(stream)
 
         key = create_legacy_local_key(key, salt)
 

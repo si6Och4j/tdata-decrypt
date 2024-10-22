@@ -1,4 +1,4 @@
-# Утилита расшифрования tdata для Telegram Desktop
+# Утилита извлечения данных из Telegram Desktop
 
 [Burger language](README.en.md)
 
@@ -19,7 +19,8 @@ tdata-decrypt /path/to/tdata
 
 Стандартные папки для хранения tdata:
  - Linux - `/home/*user*/.local/share/TelegramDesktop/tdata`
- - Windows - `C:\Users\*User*\AppData\Roaming\TelegramDesktop\tdata`
+ - Windows (Для текущего пользователя) - `%AppData%\Roaming\TelegramDesktop\tdata`
+ - MacOS - iToddlers имеют право поплакать
 
 Поскольку это *"Практически польностью переписанная версия"* все переписанные части распространяются под лицензией AGPL-3.0-only
 

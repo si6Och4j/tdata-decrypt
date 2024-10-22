@@ -1,32 +1,30 @@
 from typing import Tuple, List
 from io import BytesIO
 from enum import Enum
-from tdata_decrypt.qt import (
-    read_qt_int32,
-    read_qt_uint32,
-    read_qt_int64,
-    read_qt_uint64,
-    read_qt_byte_array,
-    read_qt_utf8,
-    read_boolean
+from tdata_decrypt.tdt import (
+    TDRawBytes,
+    TDInt32,
+    TDUInt64,
+    TDByteArray,
+    TDString,
+    TDBoolean
 )
 
 def read_key_data_accounts(data: BytesIO) -> Tuple[List[int], int]:
-    count = read_qt_int32(data)
+    count = TDInt32.read(data)
 
     indexes = [
-        read_qt_int32(data)
+        TDInt32.read(data)
         for _ in range(count)
     ]
 
-    main_account = read_qt_int32(data)
+    main_account = TDInt32.read(data)
 
     return indexes, main_account
 
 class SettingsBlocks(Enum):
     dbiKey = 0x00
     dbiUser = 0x01
-
     dbiDcOptionOldOld = 0x02
     dbiChatSizeMaxOld = 0x03
     dbiMutePeerOld = 0x04
@@ -41,7 +39,6 @@ class SettingsBlocks(Enum):
     dbiLastUpdateCheck = 0x0d
     dbiWindowPositionOld = 0x0e
     dbiConnectionTypeOldOld = 0x0f
-
     dbiDefaultAttach = 0x11
     dbiCatsAndDogsOld = 0x12
     dbiReplaceEmojiOld = 0x13
@@ -52,7 +49,6 @@ class SettingsBlocks(Enum):
     dbiRecentEmojiOldOldOld = 0x18
     dbiLoggedPhoneNumberOld = 0x19
     dbiMutedPeersOld = 0x1a
-
     dbiNotifyViewOld = 0x1c
     dbiSendToMenu = 0x1d
     dbiCompressPastedImageOld = 0x1e
@@ -113,55 +109,67 @@ class SettingsBlocks(Enum):
     dbiDialogsFiltersOld = 0x5f
     dbiFallbackProductionConfig = 0x60
     dbiBackgroundKey = 0x61
-
     dbiEncryptedWithSalt = 333
     dbiEncrypted = 444
-
     dbiVersion = 666
 
-    def _dbiSongVolumeOld(data: BytesIO) -> float:
-        return read_qt_int32(data) / 1e6
+class TDOSongVolumeOld(TDInt32):
+    @classmethod
+    def read(cls, data: BytesIO) -> float:
+        return cls._read_value(data) / 1e6
 
-    def _dbiThemeKey(data: BytesIO):
+class TDOdbiThemeKey(TDRawBytes):
+    size = TDUInt64.size + TDUInt64.size + TDBoolean.size
+
+    @classmethod
+    def read(cls, data: BytesIO):
         return {
-            'day': read_qt_uint64(data),
-            'night': read_qt_uint64(data),
-            'night_mode': read_boolean(data)
+            'day': TDUInt64.read(data),
+            'night': TDUInt64.read(data),
+            'night_mode': TDBoolean.read(data)
         }
 
-    def _dbiBackgroundKey(data: BytesIO):
+class TDOdbiBackgroundKey(TDRawBytes):
+    size = TDUInt64.size + TDUInt64.size
+
+    @classmethod
+    def read(cls, data: BytesIO):
         return {
-            'day': read_qt_uint64(data),
-            'night': read_qt_uint64(data)
+            'day': TDUInt64.read(data),
+            'night': TDUInt64.read(data)
         }
 
-    def _dbiTileBackground(data: BytesIO):
+class TDOdbiTileBackground(TDRawBytes):
+    size = TDInt32.size + TDInt32.size
+
+    @classmethod
+    def read(cls, data: BytesIO):
         return {
-            'day': read_qt_int32(data),
-            'night': read_qt_int32(data)
+            'day': TDInt32.read(data),
+            'night': TDInt32.read(data)
         }
 
 
 class Settings:
     LUT = {
-        SettingsBlocks.dbiAutoStart: read_boolean,
-        SettingsBlocks.dbiStartMinimized: read_boolean,
-        SettingsBlocks.dbiSongVolumeOld: SettingsBlocks._dbiSongVolumeOld,
-        SettingsBlocks.dbiSendToMenu: read_boolean,
-        SettingsBlocks.dbiSeenTrayTooltip: read_boolean,
-        SettingsBlocks.dbiAutoUpdate: read_boolean,
-        SettingsBlocks.dbiLastUpdateCheck: read_qt_int32,
-        SettingsBlocks.dbiScalePercent: read_qt_int32,
-        SettingsBlocks.dbiFallbackProductionConfig: read_qt_byte_array,
-        SettingsBlocks.dbiApplicationSettings: read_qt_byte_array,
-        SettingsBlocks.dbiDialogLastPath: read_qt_utf8,
-        SettingsBlocks.dbiPowerSaving: read_qt_int32,
-        SettingsBlocks.dbiThemeKey: SettingsBlocks._dbiThemeKey,
-        SettingsBlocks.dbiBackgroundKey: SettingsBlocks._dbiBackgroundKey,
-        SettingsBlocks.dbiTileBackground: SettingsBlocks._dbiTileBackground,
-        SettingsBlocks.dbiLangPackKey: read_qt_uint64,
-        SettingsBlocks.dbiMtpAuthorization: read_qt_byte_array,
-        SettingsBlocks.dbiLanguagesKey:  read_qt_uint64
+        SettingsBlocks.dbiAutoStart: TDBoolean,
+        SettingsBlocks.dbiStartMinimized: TDBoolean,
+        SettingsBlocks.dbiSongVolumeOld: TDOSongVolumeOld,
+        SettingsBlocks.dbiSendToMenu: TDBoolean,
+        SettingsBlocks.dbiSeenTrayTooltip: TDBoolean,
+        SettingsBlocks.dbiAutoUpdate: TDBoolean,
+        SettingsBlocks.dbiLastUpdateCheck: TDInt32,
+        SettingsBlocks.dbiScalePercent: TDInt32,
+        SettingsBlocks.dbiFallbackProductionConfig: TDByteArray,
+        SettingsBlocks.dbiApplicationSettings: TDByteArray,
+        SettingsBlocks.dbiDialogLastPath: TDString,
+        SettingsBlocks.dbiPowerSaving: TDInt32,
+        SettingsBlocks.dbiThemeKey: TDOdbiThemeKey,
+        SettingsBlocks.dbiBackgroundKey: TDOdbiBackgroundKey,
+        SettingsBlocks.dbiTileBackground: TDOdbiTileBackground,
+        SettingsBlocks.dbiLangPackKey: TDUInt64,
+        SettingsBlocks.dbiMtpAuthorization: TDByteArray,
+        SettingsBlocks.dbiLanguagesKey:  TDUInt64
     }
 
     @classmethod
@@ -170,7 +178,7 @@ class Settings:
         if not call:
             raise Exception(f'Unknown settings block ID: {block_id}')
 
-        return call(data)
+        return call.read(data)
 
 
 def read_settings_blocks(version, data: BytesIO):
@@ -178,7 +186,7 @@ def read_settings_blocks(version, data: BytesIO):
 
     try:
         while True:
-            id = SettingsBlocks(read_qt_int32(data))
+            id = SettingsBlocks(TDInt32.read(data))
             blocks[id] = Settings.read_value(version, data, id)
 
     except StopIteration:
