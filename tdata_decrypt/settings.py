@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from __future__ import annotations
 from io import BytesIO
 from enum import Enum
 from tdata_decrypt.tdt import (
@@ -10,7 +10,7 @@ from tdata_decrypt.tdt import (
     TDBoolean
 )
 
-def read_key_data_accounts(data: BytesIO) -> Tuple[List[int], int]:
+def read_key_data_accounts(data: BytesIO) -> tuple[list[int], int]:
     count = TDInt32.read(data)
 
     indexes = [
@@ -109,9 +109,10 @@ class SettingsBlocks(Enum):
     dbiDialogsFiltersOld = 0x5f
     dbiFallbackProductionConfig = 0x60
     dbiBackgroundKey = 0x61
-    dbiEncryptedWithSalt = 333
-    dbiEncrypted = 444
-    dbiVersion = 666
+    dbiEncryptedWithSalt = 0x14D # 333
+    dbiEncrypted = 0x1BC # 444
+    dbiVersion = 0x29A # 666
+
 
 class TDOSongVolumeOld(TDInt32):
     @classmethod
@@ -172,27 +173,30 @@ class Settings:
         SettingsBlocks.dbiLanguagesKey:  TDUInt64
     }
 
+    def __init__(self, blocks: dict[SettingsBlocks, bytes]):
+        self.blocks = blocks
+
+    def get(self, key: SettingsBlocks, default: bytes | None = None) -> bytes:
+        return self.blocks.get(key, default)
+
     @classmethod
-    def read_value(cls, verison, data: BytesIO, block_id: SettingsBlocks):
+    def _read_value(cls, verison, data: BytesIO, block_id: SettingsBlocks):
         call = cls.LUT.get(block_id)
         if not call:
             raise Exception(f'Unknown settings block ID: {block_id}')
 
         return call.read(data)
 
+    @classmethod
+    def read_all(cls, data: BytesIO, version) -> Settings:
+        blocks = {}
 
-def read_settings_blocks(version, data: BytesIO):
-    blocks = {}
+        try:
+            while True:
+                id = SettingsBlocks(TDInt32.read(data))
+                blocks[id] = Settings._read_value(version, data, id)
 
-    try:
-        while True:
-            id = SettingsBlocks(TDInt32.read(data))
-            blocks[id] = Settings.read_value(version, data, id)
+        except StopIteration:
+            pass
 
-    except StopIteration:
-        pass
-
-    return blocks
-
-class SettingsReader:
-    pass
+        return cls(blocks)

@@ -1,6 +1,6 @@
 import hashlib
 from io import BytesIO
-from tdata_decrypt.settings import read_settings_blocks
+from tdata_decrypt.settings import Settings
 from tdata_decrypt.crypto import create_local_key, create_legacy_local_key, decrypt_local
 from tdata_decrypt.tdt import TDByteArray
 
@@ -91,15 +91,15 @@ class SettingsTDF(RawTDF):
 
         return decrypt_local(data, key)
 
-    def get_settings(self, key: str = '', extract_key: bool = True):
+    def get_settings(self, key: str = '', extract_key: bool = True) -> Settings:
         if extract_key:
             data = self.get_raw_settings(key)
         else:
             data = self.get_decrypted_data(key)
 
-        return read_settings_blocks(
-            self.version,
+        return Settings.read_all(
             BytesIO(data),
+            self.version,
         )
 
     @classmethod

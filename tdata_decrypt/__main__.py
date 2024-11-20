@@ -1,6 +1,5 @@
 import argparse
-from . import display_accounts
-from .data import TData
+from tdata_decrypt import TData, display_accounts
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

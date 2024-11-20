@@ -1,20 +1,18 @@
+from __future__ import annotations
 import os
 import hashlib
-from typing import Tuple, List, Dict, Optional
 from io import BytesIO
 from tdata_decrypt.tdt import TDInt32, TDUInt64
 from tdata_decrypt.tdf import SettingsTDF, KeyTDF
-from tdata_decrypt.settings import SettingsBlocks, read_key_data_accounts
+from tdata_decrypt.settings import SettingsBlocks, Settings, read_key_data_accounts
 
 def file_to_to_str(filekey: bytes):
     return ''.join(f'{b:X}'[::-1] for b in filekey)
-
 
 def compute_data_name_key(dataname: str):
     filekey = hashlib.md5(dataname.encode('utf8')).digest()[:8]
 
     return file_to_to_str(filekey)
-
 
 def compose_account_name(index: int):
     if index > 0:
@@ -22,16 +20,15 @@ def compose_account_name(index: int):
 
     return 'data'
 
-
 class MtpData:
     def __init__(self):
         self.user_id: int = None
         self.main_dc_id: int = None
-        self.keys: Dict[int, bytes] = None
-        self.keys_to_destroy: Dict[int, bytes] = None
+        self.keys: dict[int, bytes] = None
+        self.keys_to_destroy: dict[int, bytes] = None
 
     @classmethod
-    def from_bytes(cls, data: bytes):
+    def from_bytes(cls, data: bytes) -> MtpData:
         stream = BytesIO(data)
 
         mtp_data = cls()
@@ -44,7 +41,7 @@ class MtpData:
         def read_keys():
             return {
                 TDInt32.read(stream): stream.read(256)
-                for _ in range(TDInt32.read(stream)) # count
+                for _ in range(TDInt32.read(stream))
             }
 
         mtp_data.keys = read_keys()
@@ -63,7 +60,9 @@ class Account:
         self.mtp_data = None
 
     @classmethod
-    def get_by_index(cls, base_path: str, index: int, local_key: bytes):
+    def get_by_index(
+            cls, base_path: str,
+            index: int, local_key: bytes) -> Account:
         account = cls(base_path, index)
         account.local_key = local_key
         account.mtp_data = account.read_mtp_data(local_key)
@@ -89,11 +88,11 @@ class TData:
         )
 
         self.path = path
-        self.settings: Optional(SettingsTDF) = None
-        self.accounts: Optional(Dict[int, Account]) = None
-        self.main_account: Optional(int) = None
+        self.settings: Settings | None = None
+        self.accounts: dict[int, Account] | None = None
+        self.main_account: int | None = None
 
-    def read_settings(self):
+    def read_settings(self) -> Settings:
         if not self.settings is None:
             return self.settings
 
@@ -103,12 +102,13 @@ class TData:
 
         return self.settings
 
-    def read_accounts(self):
+    def read_accounts(self) -> dict[int, Account]:
         if not self.accounts is None:
             return self.accounts
 
-        account_indexes, self.main_account = \
-            read_key_data_accounts(BytesIO(self.accounts_index))
+        account_indexes, self.main_account = read_key_data_accounts(
+            BytesIO(self.accounts_index)
+        )
 
         self.accounts = {}
         for index in account_indexes:
@@ -116,10 +116,9 @@ class TData:
                 self.path, index, self.local_key
             )
 
-
         return self.accounts
 
-    def get_main_account(self):
+    def get_main_account(self) -> int:
         self.read_accounts()
 
         return self.main_account
