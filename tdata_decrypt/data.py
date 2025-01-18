@@ -4,21 +4,15 @@ import hashlib
 from io import BytesIO
 from tdata_decrypt.tdt import TDInt32, TDUInt64
 from tdata_decrypt.tdf import SettingsTDF, KeyTDF
-from tdata_decrypt.settings import SettingsBlocks, Settings, read_key_data_accounts
-
-def file_to_to_str(filekey: bytes):
-    return ''.join(f'{b:X}'[::-1] for b in filekey)
+from tdata_decrypt.settings import (
+    SettingsBlocks,
+    Settings,
+    read_key_data_accounts)
 
 def compute_data_name_key(dataname: str):
     filekey = hashlib.md5(dataname.encode('utf8')).digest()[:8]
 
-    return file_to_to_str(filekey)
-
-def compose_account_name(index: int):
-    if index > 0:
-        return f'data#{index+1}'
-
-    return 'data'
+    return ''.join(f'{b:X}'[::-1] for b in filekey)
 
 class MtpData:
     def __init__(self):
@@ -54,7 +48,11 @@ class Account:
     def __init__(self, base_path: str, index: int):
         self._base_path = base_path
         self.index = index
-        self.account_name = compose_account_name(index)
+
+        self.account_name = 'data'
+        if index > 0:
+            self.account_name += f'#{index + 1}'
+
         self.dataname_key = compute_data_name_key(self.account_name)
         self.local_key = None
         self.mtp_data = None
@@ -71,21 +69,17 @@ class Account:
 
     def read_mtp_data(self, local_key: bytes) -> MtpData:
         tdf = SettingsTDF.from_file(
-            os.path.join(self._base_path, self.dataname_key)
-        )
+            os.path.join(self._base_path, self.dataname_key))
         blocks = tdf.get_settings(local_key, False)
 
         return MtpData.from_bytes(
-            blocks.get(SettingsBlocks.dbiMtpAuthorization)
-        )
+            blocks.get(SettingsBlocks.dbiMtpAuthorization))
 
 
 class TData:
     def __init__(self, path: str, password: str = ''):
         self.local_key, self.accounts_index = KeyTDF.read_key(
-            os.path.join(path, 'key_data'),
-            password
-        )
+            os.path.join(path, 'key_data'), password)
 
         self.path = path
         self.settings: Settings | None = None
@@ -97,8 +91,7 @@ class TData:
             return self.settings
 
         self.settings = SettingsTDF.read_settings(
-            os.path.join(path, 'settings')
-        )
+            os.path.join(path, 'settings'))
 
         return self.settings
 
@@ -107,14 +100,12 @@ class TData:
             return self.accounts
 
         account_indexes, self.main_account = read_key_data_accounts(
-            BytesIO(self.accounts_index)
-        )
+            BytesIO(self.accounts_index))
 
         self.accounts = {}
         for index in account_indexes:
             self.accounts[index] = Account.get_by_index(
-                self.path, index, self.local_key
-            )
+                self.path, index, self.local_key)
 
         return self.accounts
 

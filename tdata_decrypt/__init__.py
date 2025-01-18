@@ -1,5 +1,19 @@
-from .data import TData
+import argparse
 import base64
+from .data import TData
+
+def cli():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('tdata', type=str, help='Path to tdata directory')
+    parser.add_argument(
+        '--password', type=str, help='Local key encryption password',
+        default='', required=False
+    )
+    args = parser.parse_args()
+
+    data = TData(args.tdata, args.password)
+    display_accounts(data)
+
 
 def display_accounts(data: TData):
     for account in data.read_accounts().values():
