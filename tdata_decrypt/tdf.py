@@ -4,11 +4,12 @@ from tdata_decrypt.settings import Settings
 from tdata_decrypt.crypto import create_local_key, create_legacy_local_key, decrypt_local
 from tdata_decrypt.tdt import TDByteArray
 
+class ParseError(Exception):
+    pass
+
+
 class RawTDF:
     MAGIC = b'TDF$'
-
-    class ParseError(Exception):
-        pass
 
     def __init__(self):
         self.version = None
@@ -32,12 +33,15 @@ class RawTDF:
     def from_file(cls, path: str):
         for candidate in [path + 's', path]:
             with open(candidate, 'rb') as f:
-                tdf = cls.from_bytes(f.read())
-                tdf.path = candidate
+                try:
+                    tdf = cls.from_bytes(f.read())
+                    tdf.path = candidate
+                except ParseError:
+                    continue
 
                 return tdf
 
-        raise FileNotFoundError('Unable to locate TDF')
+        raise FileNotFoundError(f'Unable to locate TDF: {path}')
 
     @classmethod
     def from_bytes(cls, data: bytes):
@@ -56,7 +60,7 @@ class RawTDF:
             cls.MAGIC
         ).digest()
         if checksum != tdf.hashsum:
-            raise TdfParserError('Wrong hashsum. Corrupted file?')
+            raise ParseError('Wrong hashsum. Corrupted file?')
 
         return tdf
 
