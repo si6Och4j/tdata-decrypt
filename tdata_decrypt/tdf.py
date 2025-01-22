@@ -1,3 +1,4 @@
+import os.path
 import hashlib
 from io import BytesIO
 from tdata_decrypt.settings import Settings
@@ -32,11 +33,15 @@ class RawTDF:
     @classmethod
     def from_file(cls, path: str):
         for candidate in [path + 's', path]:
+            if not os.path.isfile(candidate):
+                continue
+
             with open(candidate, 'rb') as f:
                 try:
                     tdf = cls.from_bytes(f.read())
                     tdf.path = candidate
-                except ParseError:
+                except ParseError as e:
+                    print(f'Invalid TDF file: {path} ({e})')
                     continue
 
                 return tdf
